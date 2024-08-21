@@ -1,4 +1,5 @@
 import subprocess
+import requests
 from utils import menu
 
 class NmapScanner:
@@ -13,6 +14,19 @@ class NmapScanner:
         IpAdress=str(input("Digite o Ip a ser utilizado(utilize ponto a cada 8 bits):"))
         print("\n")
         return IpAdress
+    
+    #Função utilizada para fazer conexão com MACvendors API
+    def import_MacVendor(MAC):
+        url= f"https://api.macvendors.com/{MAC}"
+        try:
+            response=requests.get(url)
+            if response.status_code == 200:
+                return response.text
+            else:
+                return "MAC not found"
+        except requests.exceptions.RequestException:
+            return "Erro ao acessar a API"
+
     
     #incluir try except na próxima versão, impedindo ip inválido.
     def localScan(targetIP):
@@ -34,6 +48,8 @@ class NmapScanner:
             if line.startswith("MAC Address"):
                 MACPresence=True
                 cleaned_line=line[13:30]
+                vendor=NmapScanner.import_MacVendor(cleaned_line) #Faz a adição da maquina achada no macvendor
+                cleaned_line += f" ({vendor})"
                 MACs.append(str(cleaned_line))
         
         return devices, MACs, MACPresence
