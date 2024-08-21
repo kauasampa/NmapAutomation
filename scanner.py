@@ -1,5 +1,6 @@
 import subprocess
 import requests
+import time#usado para que API não exceda limite de requests/second
 from utils import menu
 
 class NmapScanner:
@@ -20,10 +21,11 @@ class NmapScanner:
         url= f"https://api.macvendors.com/{MAC}"
         try:
             response=requests.get(url)
-            if response.status_code == 200:
+            print(f"resposta para o endereço {MAC}: {response.status_code}")
+            if response.status_code == 200: #Codigo de status 429 indica tempo limite excedido
                 return response.text
             else:
-                return "MAC not found"
+                return response.text
         except requests.exceptions.RequestException:
             return "Erro ao acessar a API"
 
@@ -37,6 +39,7 @@ class NmapScanner:
         devices=[]
         MACs=[]
         MACPresence=False 
+        TimePause=0
 
         #Tratamento de informações de cada dispositivo, exibindo nome, IP e MAC de cada dispositivo(como meu disp. não tem MAC, ele não aparece)
         for line in lines:
@@ -46,11 +49,19 @@ class NmapScanner:
                 devices.append(str(cleaned_line))
             #Captura MAC do host
             if line.startswith("MAC Address"):
+                #TimePause é utilizado para que a API demore 2 segundos após 2 requests, pois o plano é limitado.
+                if TimePause >=2:
+                    print("Pause for API")
+                    time.sleep(1)
+                    TimePause=0
+
                 MACPresence=True
                 cleaned_line=line[13:30]
                 vendor=NmapScanner.import_MacVendor(cleaned_line) #Faz a adição da maquina achada no macvendor
                 cleaned_line += f" ({vendor})"
                 MACs.append(str(cleaned_line))
+                
+                TimePause+=1
         
         return devices, MACs, MACPresence
     
