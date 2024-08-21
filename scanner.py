@@ -12,9 +12,27 @@ class NmapScanner:
         #importar api  de macvendors.com
     '''
     def writeIp():
-        IpAdress=str(input("Digite o Ip a ser utilizado(utilize ponto a cada 8 bits):"))
+        IpAdress=str(input("Digite manualmente o Ip a ser utilizado (utilize ponto a cada 8 bits):"))
         print("\n")
         return IpAdress
+    
+    def get_default_gateway():
+        try:
+            # Executa o comando 'ip route' para obter as rotas da rede
+            result = subprocess.run(['ip', 'route'], capture_output=True, text=True)
+            output = result.stdout
+            
+            # Processa a saída para encontrar o gateway padrão
+            for line in output.splitlines():
+                if line.startswith('default'):
+                    # Extrai o endereço IP do gateway padrão
+                    gateway_ip = line.split()[2]
+                    print(f"Seu gateway padrão é: {gateway_ip}")
+                    return gateway_ip
+        except Exception as e:
+            print(f"Erro ao obter o gateway padrão: {e}")
+            gateway_ip=NmapScanner.writeIp()
+            return gateway_ip
     
     #Função utilizada para fazer conexão com MACvendors API
     def import_MacVendor(MAC):
@@ -52,7 +70,7 @@ class NmapScanner:
                 #TimePause é utilizado para que a API demore 2 segundos após 2 requests, pois o plano é limitado.
                 if TimePause >=2:
                     print("Pause for API")
-                    time.sleep(1)
+                    time.sleep(2)
                     TimePause=0
 
                 MACPresence=True
@@ -66,6 +84,7 @@ class NmapScanner:
         return devices, MACs, MACPresence
     
     #Tratar saída "limpa" na próxima versão
+    #Usuário não precisa digitar IP alvo completo, a lista de IPs conectados irá aparecer direto
     def run_intrusive_nmap(target):
         while True:
             option=menu.show_second_menu()
@@ -84,7 +103,6 @@ class NmapScanner:
                     print("Scan finalizado\n")    
                 elif option == 2:
                     print("Processando opção 2...\n")
-                    print("Digite o IP do host a ser analisado:")
                     output=subprocess.run(["nmap", "-A", NmapScanner.writeIp()])
                     print(output)
                 elif option == 3:

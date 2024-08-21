@@ -19,4 +19,4 @@ def run_nmap(target):
         except:
             print(f"ocorreu um erro ao executar nmap com a opção: {option}")
 
-run_nmap(NmapScanner.writeIp())
+run_nmap(NmapScanner.get_default_gateway())
